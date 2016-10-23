@@ -1,0 +1,166 @@
+(*  COMP 321 Homework 3:  Lexer and parser for a fragment of C.
+*
+*   ml-antlr specification.
+*
+*   BY: Ping-Jung Liu, Fabien Bessez 
+*   Fall 2016
+*)
+
+(*  The base of the generated structures and functors must be CPPGrm, so the
+*   parsing functor will be named CPPGrmParseFn and the token structure will be
+*   named CPPGrmTokens.
+*)
+%name CPPGrm ;
+
+%defs (
+  open Ast
+  fun leftAssoc (rator : exp*exp->exp) (e : exp) (es : exp list) : exp = 
+	case es of
+		[] => e
+	      | e' :: es => leftAssoc rator (rator(e, e')) es	
+  fun leftAssoc2 (e : exp) (ratorsAndRands : ((exp*exp -> exp)*exp) list) : exp = 
+	case ratorsAndRands of
+	[] => e
+      | x::xs => let val (operator, expression) = x in leftAssoc2 (operator(e, expression)) (xs)
+		end
+) ;
+
+(* You are required to have a non-terminal exp, which is the starting
+*  non-terminal for expressions.  Normally ml-antlr produces only a parsing
+*  function named parse, which starts the parse with the first non-terminal for
+*  which there is a production.  This directive ensures that ml-antlr also
+*  produces a parsing function called parseexp, which attempts to derive the
+*  token sequence starting with the exp non-terminal rather than the pgm
+*  non-terminal.  Note that by having this directive, the exp non-terminal
+*  must not be the first non-terminal.
+*)
+%entry exp ;
+
+(*  You must define your tokens as part of the grammar file.  Do not define an
+*   EOF token; ml-antlr will add it to the token datatype for you.  Delete these
+*   two tokens and define your own; they are present here solely to ensure that
+*   the code generated from this specification compiles (it seems that you need
+*   at least two tokens).
+*)
+%tokens : 
+    NUM of int
+  | DOUBLE of real
+  | PLUS
+  | MINUS
+  | DIVIDE
+  | MOD
+  | CONJUNCTION
+  | DISJUNCTION
+  | LSHIFT
+  | RSHIFT
+  | INCREMENT
+  | DECREMENT
+  | NEGATION
+  | Q
+  | COLON  	
+  | TIMES
+  | EQ
+  | LT
+  | GT
+  | BOOL of string
+  | ID of string
+  | STRING of string
+  | TYPE of string
+  | SEMI
+  | C
+  | LC
+  | RC
+  | LPAREN
+  | RPAREN
+  | DO
+  | WHILE
+  | FOR
+  | IF
+  | ELSE
+  | COMMENT
+  | PRINT
+  | RETURN
+  ;
+
+(*  The first non-terminal must yield a value of type Ast.program.
+*)
+pgm :  (* Ast.program *)
+    decl* => ( PPro(decl) )
+  ;
+decl :
+    TYPE ID EQ exp (C ID EQ exp)* SEMI COMMENT* => (DInit(TYPE, ((ID, exp) :: SR)))
+  | TYPE ID (C ID)* SEMI COMMENT*=> (DDecl(TYPE, (ID :: SR)))  
+  | TYPE ID LPAREN TYPE (C TYPE)* RPAREN SEMI => (FProo(TYPE1, ID, TYPE2::SR))
+  | TYPE ID LPAREN tyid (C TYPE ID)* RPAREN fun_rest COMMENT* => (case fun_rest of NONE => (FPro(TYPE, ID, tyid :: SR)) | SOME s => (FDefi(TYPE, ID, tyid :: SR, s)))
+  ;
+
+
+statement :
+    TYPE ID EQ exp (C ID EQ exp)* => (SInit(TYPE, ((ID, exp) :: SR)))
+  | TYPE ID (C ID)*  => (SDecl(TYPE, (ID :: SR))) 
+  | ID EQ exp => (SReg(ID, exp))
+  | DO statement SEMI WHILE LPAREN exp RPAREN => (SDW(statement, exp))
+  | PRINT LPAREN exp RPAREN => (SPrint(exp))
+  | RETURN exp => (SReturn(exp)) 
+  | IF LPAREN exp RPAREN statement if_rest => 
+	(case if_rest of NONE => SIf(statement, exp) | SOME s => SIfEl(statement, s, exp))
+  | FOR LPAREN statement SEMI exp SEMI exp RPAREN statement => (SFor(statement2, statement1, exp1, exp2))
+  ;
+
+
+fun_rest :
+    SEMI => (NONE)
+  | LC (statement SEMI)* RC => (SOME SR) 
+  ;
+
+
+if_rest :
+     => (NONE)
+  | SEMI ELSE statement => (SOME statement)
+  ;
+  
+
+
+tyid :
+    TYPE ID => (TYPE, ID)
+  ;
+(*  You must have a non-terminal named exp, and it must yield a value of type
+*   Ast.exp.
+*)
+exp :  (*  Ast.exp *)
+   INCREMENT e_mu	=> (EIncrement e_mu)
+ | DECREMENT e_mu	=> (EDecrement e_mu)
+ | e_at INCREMENT	=> (EIncrement e_at)
+ | e_at DECREMENT 	=> (EDecrement e_at)
+ | e_mu (
+	PLUS e_mu => (EPlus, e_mu)
+      | MINUS e_mu => (EMinus, e_mu)
+      | CONJUNCTION e_mu => (EConjunction, e_mu)
+      | DISJUNCTION e_mu => (EDisjunction, e_mu)
+      | LSHIFT e_mu	 => (ELShift, e_mu)
+      | RSHIFT e_mu	 => (ERShift, e_mu)
+      | MOD e_mu	 => (EMod, e_mu)
+	)*=> (leftAssoc2 e_mu SR)
+ | e_at (LT e_at) => (ELess(e_at, SR))
+ | e_at (GT e_at) => (EGreat(e_at, SR))
+ | e_at EQ (EQ e_at) => (EEqual(e_at, SR))
+ | NEGATION e_mu	=> (ENegation e_mu)
+ | e_at Q e_mu COLON e_mu => (ETernary (e_at, e_mu1, e_mu2))
+
+  ;
+
+
+e_mu :
+    e_at (
+	TIMES e_at => (ETimes, e_at)
+      | DIVIDE e_at => (EDivide, e_at)
+		)* => (leftAssoc2 e_at SR)
+  ;
+
+e_at :
+    ID => (EId ID)
+  | DOUBLE => (EDouble DOUBLE)
+  | BOOL => (EBool BOOL)
+  | NUM => (ENum NUM)
+  | STRING => (EString STRING)
+  ;

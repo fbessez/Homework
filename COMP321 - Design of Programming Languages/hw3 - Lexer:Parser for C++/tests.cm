@@ -1,0 +1,14 @@
+Group
+  structure Tests
+is
+  tests.sml
+  unit_test.sml
+
+  cpp.cm
+
+  $/basis.cm
+  $/smlnj-lib.cm
+  $/ml-lpt-lib.cm
+  $smlnj-tdp/plugins.cm
+
+  $smlnj/compiler/compiler.cm

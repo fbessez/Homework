@@ -1,0 +1,13 @@
+Group
+  structure Tests
+is
+  pri_queue.cm
+
+  tests.sml
+  unit_test.sml
+
+  $/basis.cm
+  $/smlnj-lib.cm
+
+  $smlnj-tdp/plugins.cm
+  $smlnj/compiler/compiler.cm
