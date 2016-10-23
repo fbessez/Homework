@@ -4,6 +4,8 @@
 Module for use in COMP 211 Homework 7.
 
 @author F. Bessez
+
+Requires typing module in Python3.5
 """
 
 
@@ -12,6 +14,7 @@ import random
 import sys
 import time
 import tkinter
+import typing
 
 from typing import Tuple
 
