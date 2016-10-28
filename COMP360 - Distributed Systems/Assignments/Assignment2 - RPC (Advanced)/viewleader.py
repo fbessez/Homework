@@ -3,8 +3,12 @@
 Author: Fabien Bessez
 Course: COMP360-02 Distributed Systems
 Professor: Jeff Epstein
-Assignment1: Remote Procedure Calls with ViewLeader, 
-			 Heartbeats, Group View and Centralized Locking
+Assignment2: Remote Procedure Calls with 
+			 ViewLeader, 
+			 Heartbeats, 
+			 Group View
+			 Deadlock Detector
+			 Lock Releasing post-crash of server
 '''
 
 import socket
@@ -37,14 +41,27 @@ while port < 39010 and port >= 39000:
 	port = port + 1
 bound_socket.listen(1)
 
-# if timeout:
-# 	bound_socket.settimeout(timeout)
-
+'''
+PURPOSE: Simplifies a send call
+BEHAVIOR: Encodes the desired message, sends the length of that message and then
+			sends the rest of the message
+INPUT: response (list)
+OUTPUT: sock.sendall
+'''
 def send_to_client(response):
 	msg_length_encoded = struct.pack("!i", len(response))
 	sock.sendall(msg_length_encoded)
 	sock.sendall(str.encode(response))
 
+
+'''
+PURPOSE: Manages the active servers list
+BEHAVIOR: Checks to see if server had previously failed.
+			If so, it does not add it to the active servers list
+			Otherwise, it does.
+INPUT: list
+OUTPUT: 
+'''
 def manage_heartbeats(listdata):
 	address = listdata[1]
 	unique_id = listdata[2]
@@ -59,6 +76,12 @@ def manage_heartbeats(listdata):
 	print("-----------------")
 	print(active_servers)
 
+'''
+PURPOSE: Gets the current epoch
+BEHAVIOR: Calculates the epoch based on failed servers and active servers
+INPUT: dict
+OUTPUT: int
+'''
 def get_epoch(id_time_server_pos):
 	epoch = len(id_time_server_pos)
 	for key in id_time_server_pos:
@@ -68,13 +91,21 @@ def get_epoch(id_time_server_pos):
 			epoch = epoch + 0
 	return epoch
 
+'''
+PURPOSE: Checks to see if servers timed out
+BEHAVIOR: Checks to see if server has not sent heartbeat in 30 seconds.
+			If it hasn't -> update the id_time_server_pos dict
+			If it has -> do nothing
+INPUT: list
+OUTPUT: 
+'''
 def check_servers(id_time_server_pos):
 	current_time = time.time()
 	for key in id_time_server_pos:
 		time_stamp = id_time_server_pos[key][1]
 		if type(time_stamp) == str:
 			None
-		elif current_time - time_stamp > 5:
+		elif current_time - time_stamp > 30:
 			active_servers.remove(id_time_server_pos[key][0])
 			for lock in lock_keeper:
 				if id_time_server_pos[key][0][9:] in lock_keeper[lock]:
@@ -85,6 +116,46 @@ def check_servers(id_time_server_pos):
 			None
 	return id_time_server_pos
 
+
+
+'''
+PURPOSE: To detect deadlocks!
+BEHAVIOR: It forms tuples of all requesters dependent on other
+			requesters ahead of it in the lock queue
+			If there exists a scenario where (a,b) and (b,a) exists
+				then yes deadlock
+			otherwise, no deadlock
+INPUT: dict
+OUTPUT: bool
+'''
+def detect_deadlock(lock_keeper):
+	pairs = []
+	for lock in lock_keeper:
+		list_of_requesters = lock_keeper[lock]
+		num_of_requesters = len(list_of_requesters)
+		max_index = num_of_requesters - 1
+		while max_index >= 0:
+			index = 0
+			while index != max_index:
+				pairs.append((list_of_requesters[index],list_of_requesters[max_index]))
+				index = index + 1
+			max_index = max_index - 1
+	for (a,b) in pairs:
+		if (b, a) in pairs: 
+			print("Deadlock has been detected...")
+			print("Requester " + a + " relies on requester " + b + " and vice versa.")
+			return True
+	return False
+
+'''
+PURPOSE: Checks to see if the desired lock is available --> helper for lock_manager
+BEHAVIOR: Checks to see if 
+		a) lock exists 
+		b) lock exists and has owner
+	or 	c) lock exists and has no owner
+INPUT: string, string, list
+OUTPUT: bool
+'''
 def is_lock_available(lock_id, requester_id, lock_keeper):
 	if lock_id not in lock_keeper:
 		return True
@@ -95,6 +166,12 @@ def is_lock_available(lock_id, requester_id, lock_keeper):
 	else:
 		return False
 
+'''
+PURPOSE: Responds to lock requests
+BEHAVIOR: Checks to see if lock can be obtained or not and then delivers the status to requester
+INPUT: string, string, list
+OUTPUT: send_to_client
+'''
 def lock_manager(lock_id, requester_id, lock_keeper):
 	if is_lock_available(lock_id, requester_id, lock_keeper):
 		lock_keeper[lock_id] = [requester_id]
@@ -104,7 +181,15 @@ def lock_manager(lock_id, requester_id, lock_keeper):
 			lock_keeper[lock_id].append(requester_id)
 		send_to_client(retry_message)
 	print("Current lock_system: " + str(lock_keeper))
+	detect_deadlock(lock_keeper)
 
+
+'''
+PURPOSE: Releases locks!
+BEHAVIOR: requester releases lock if it was on waiting list or owned it already
+INPUT: string, string, list
+OUTPUT: send_to_client
+'''
 def lock_release(lock_id, requester_id, lock_keeper):
 	if lock_id in lock_keeper:
 		for val in lock_keeper[lock_id]:
@@ -116,6 +201,13 @@ def lock_release(lock_id, requester_id, lock_keeper):
 		send_to_client("Error: The lock that you are trying to release doesn't exist")
 	print("Current lock_system: " + str(lock_keeper))
 
+
+'''
+PURPOSE: Filters incoming messages
+BEHAVIOR: checks first index of the listdata for different RPCs.
+INPUT: list, list
+OUTPUT: 
+'''
 def function_filter(listdata, lock_keeper):
 	if listdata[0] == "query_servers":
 		epoch = get_epoch(id_time_server_pos)
@@ -134,6 +226,12 @@ def function_filter(listdata, lock_keeper):
 	elif listdata[0] == "lock_release":
 		lock_release(listdata[1], listdata[2], lock_keeper)
 
+'''
+PURPOSE: Receives and decodes messages
+BEHAVIOR: receives message -> unpacks it -> converts to string -> convert from json to type
+INPUT: sock
+OUTPUT: list
+'''
 def receive_and_decode(sock):
 	msg_length_encoded = sock.recv(4, socket.MSG_WAITALL)
 	msg_length, = struct.unpack("!i", msg_length_encoded)
@@ -142,6 +240,8 @@ def receive_and_decode(sock):
 	strdata = data.decode("utf-8")
 	listdata = json.loads(strdata)
 	return listdata
+
+
 
 while True:
 	try:

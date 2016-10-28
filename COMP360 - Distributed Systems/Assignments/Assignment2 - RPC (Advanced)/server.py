@@ -2,7 +2,12 @@
 Author: Fabien Bessez
 Course: COMP360-02 Distributed Systems
 Professor: Jeff Epstein
-Assignment1: Remote Procedure Calls
+Assignment2: Remote Procedure Calls with 
+			 ViewLeader, 
+			 Heartbeats, 
+			 Group View
+			 Deadlock Detector
+			 Lock Releasing post-crash of server
 '''
 
 import socket
@@ -32,10 +37,22 @@ serverport = port
 print(serverport)
 socket_id = str(uuid.uuid4())
 
+
+'''
+PURPOSE: Simplifies the process of receiving msg_length and then the msg.
+		 It reduces redundancies!
+BEHAVIOR: It unpacks the length of the msg into a 32 bit binary value. then
+		 it receives he rest of the incoming msg
+INPUT: sock
+OUTPUT: str
+'''
 def receive_msgs(sock):
 	msg_length_encoded = sock.recv(4, socket.MSG_WAITALL)
 	msg_length, = struct.unpack("!i", msg_length_encoded)
 	return sock.recv(msg_length, socket.MSG_WAITALL)
+
+
+
 '''
 PURPOSE: Simplifies the msg_length_encoding and sock.send calls
 BEHAVIOR: It packs the length of the msg into a 32 bit binary value
@@ -48,6 +65,15 @@ def encode_and_send(msg, sock):
 	sock.sendall(msg_length_encoded)
 	sock.sendall(str.encode(msg))
 
+
+'''
+PURPOSE: Connects to the viewleader to either send heartbeat or get locks
+BEHAVIOR: Creates connection to viewleader -> 
+			then either sends heartbeat and waits for confirmation
+			OR sends a lock request and will retry until it obtains the lock
+INPUT: str, int, int, str
+OUTPUT: 
+'''
 def connect_to_viewleader(view_host, port, socket_id, command):
 	while port < 39010 and port >= 39000:
 		try:
@@ -212,8 +238,6 @@ calls the function_filter function. Furthermore, this loop prints the string
 form of what the server received, as well as the total amount of messages that
 the server has received since being established.
 '''
-
-
 while True:
 	try:
 		bound_socket.settimeout(5.0)

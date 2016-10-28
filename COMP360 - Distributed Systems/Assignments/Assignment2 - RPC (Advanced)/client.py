@@ -2,8 +2,14 @@
 Author: Fabien Bessez
 Course: COMP360-02 Distributed Systems
 Professor: Jeff Epstein
-Assignment1: Remote Procedure Calls
+Assignment2: Remote Procedure Calls with 
+			 ViewLeader, 
+			 Heartbeats, 
+			 Group View
+			 Deadlock Detector
+			 Lock Releasing post-crash of server
 '''
+
 
 import socket
 import json
@@ -52,6 +58,7 @@ view_host = args.viewleader # this would be the server IP address
 timeout = 10
 port = int(args.port)
 
+# Determines whether to connect to server or viewleader upon startup
 if args.cmd == "query_servers" or args.cmd == "lock_get" or args.cmd == "lock_release":
 	port = 39000
 else:
@@ -72,6 +79,13 @@ while port < 39010 and port >= 39000:
 		break
 	port = port + 1
 
+
+'''
+PURPOSE: Connects to the viewleader!
+BEHAVIOR: Creates connection with viewleader and then receives data! ...hopefully
+INPUT: str, str, str, int, str, int
+OUTPUT: str
+'''
 def connect_to_vl(cmd, lock_id, requester_id, msg_count, host, port):
 	timeout = 5
 	try:
@@ -110,7 +124,7 @@ PURPOSE: Simplifies the process of sending msg_length and then the msg.
 		 It reduces redundancies!
 BEHAVIOR: It packs the length of the msg into a 32 bit binary value. then
 		 it sends both that binary value and the rest of the msg to the client
-INPUT: str
+INPUT: str, sock
 OUTPUT: sock.sendall
 '''
 def encode_and_send_with_sock(msg, sock):
@@ -121,6 +135,14 @@ def encode_and_send_with_sock(msg, sock):
 	except (NameError):
 		print("something")
 
+'''
+PURPOSE: Simplifies the process of sending msg_length and then the msg.
+		 It reduces redundancies!
+BEHAVIOR: It packs the length of the msg into a 32 bit binary value. then
+		 it sends both that binary value and the rest of the msg to the client
+INPUT: str
+OUTPUT: sock.sendall
+'''
 def encode_and_send(msg):
 	msg_length_encoded = struct.pack("!i", len(msg))
 	try: 
@@ -129,6 +151,13 @@ def encode_and_send(msg):
 	except (NameError): 
 		print("Something went wrong with the connection so your message could not be sent. Please check the server!")
 
+'''
+PURPOSE: Forms the msg to be sent to server or viewleader
+BEHAVIOR: For the X amount of arguments given, it just puts those arguments into a list,
+			then Jsonifys that list to be sent over the network.
+INPUT: *args
+OUTPUT: encode_and_send
+'''
 def client_msg_maker(*arg):
 	msg = []
 	for i in range(0, len(arg)):
@@ -160,6 +189,8 @@ def function_filter(args, msg_count):
 		client_msg_maker(args.cmd, args.lock_id, args.requester_id, msg_count)
 	else:
 		print("Sorry, but that request could not be made")
+
+
 '''
 The following code keeps track of the msg_count, receives and unpacks
 the length of incoming messages, as well as the actual incoming messages.
@@ -173,6 +204,8 @@ try:
 	msg_length, = struct.unpack("!i", msg_length_encoded)
 	response = sock.recv(msg_length, socket.MSG_WAITALL).decode("utf-8")
 	print("Response: " + response)
+	# The following causes the client to keep trying to obtain the lock every 5 seconds
+	# until the client obtainas the lock!
 	while json.loads(response) == {"status": "retry"}:
 		print("Retrying for " + str(args.lock_id) + "...")
 		time.sleep(5)
@@ -187,8 +220,6 @@ try:
 	sock.close()
 except (ValueError):
 	sock.close()
-# except (OSError): 
-# 	print("OSError: Please call client.py with appropriate arguments.")
 except (struct.error):
 	print("You can't do that!")
 
