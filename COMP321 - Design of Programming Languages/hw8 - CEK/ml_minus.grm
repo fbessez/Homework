@@ -1,0 +1,178 @@
+%name MLMinus ;
+
+%defs (
+  fun multi_unop rator 1 t = Ast.Not(t)
+    | multi_unop rator n t = Ast.Not(multi_unop rator (n-1) t)
+
+  fun multi_unop' rators t =
+      case rators of
+           [] => t
+         | r :: rs => r(multi_unop' rs t)
+
+  fun multi_binop_right rator ([t]) = t
+    | multi_binop_right rator (t :: ts) = rator(t, multi_binop_right rator ts)
+
+  fun multi_binop_left' rator ([t]) = t
+    | multi_binop_left' rator (t :: ts) = rator(multi_binop_left' rator ts, t)
+  fun multi_binop_left rator ts = multi_binop_left' rator (rev ts)
+
+  (*  multi_binop_left2 e [(r_0,e_0),...,(r_{n-1},e_{n-1})] =
+   *    r_{n-1}(r_{n-2}(...r_1(r_0(e, e_0), e_1)...,e_{n-2}), e_{n-1), n > 0
+   *    e, n = 0.
+   *)
+  fun multi_binop_left2' init [] = init
+    | multi_binop_left2' init ((rator, rand) :: rrs) =
+        rator (multi_binop_left2' init rrs, rand)
+  fun multi_binop_left2 init rrs = multi_binop_left2' init (rev rrs)
+
+);
+
+%tokens
+  : ID of Ast.ident
+  | NUM of int
+  | STRING of string
+  | TRUE
+  | FALSE
+  | ORELSE ("orelse")
+  | ANDALSO ("andalso")
+  | NOT ("not")
+  | PLUS ("+")
+  | MINUS ("-")
+  | TIMES ("*")
+  | EQ ("=")
+  | NE ("<>")
+  | LT ("<")
+  | LE ("<=")
+  | GT (">")
+  | GE (">=")
+  | CAT ("^")
+  | DIV ("/")
+  | LP  ("(")
+  | RP  (")")
+  | LVERT ("[")
+  | RVERT ("]")
+  | FN  ("fn")
+  | DARROW ("=>")
+  | LET ("let")
+  | LETREC ("let rec")
+  | BE 
+  | IN ("in")
+  | END ("end")
+  | IF ("if")
+  | THEN ("then")
+  | ELSE ("else")
+  | ENDIF ("fi")
+  | SEL1 ("#1")
+  | SEL2 ("#2")
+  | COMMA (",")
+  | VAL ("val")
+  | VALREC ("val rec")
+  ;
+
+%entry exp ;
+
+pgm
+  : ((VAL => (Ast.Val) | VALREC => (Ast.Valrec)) ID EQ exp =>
+      (SR(ID, exp)))+ => (Ast.Program SR)
+  ;
+
+
+exp
+  : orelse_exp
+  ;
+
+orelse_exp
+  : andalso_exp (ORELSE andalso_exp)* => 
+      (multi_binop_left Ast.Orelse (andalso_exp :: SR))
+  ;
+
+andalso_exp
+  : numrel_exp (ANDALSO numrel_exp)* => 
+      (multi_binop_left Ast.Andalso (numrel_exp :: SR))
+  ;
+
+numrel_exp
+  : plusminus_exp 
+    ((EQ => (Ast.Eq)
+     |NE => (Ast.Ne)
+     |LT => (Ast.Lt)
+     |LE => (Ast.Le)
+     |GT => (Ast.Gt)
+     |GE => (Ast.Ge)) plusminus_exp => ( fn x => SR(x, plusminus_exp)) )? =>
+    (case SR of NONE => plusminus_exp | SOME f => f plusminus_exp)
+  ;
+
+
+plusminus_exp
+  : cat_exp (
+      (PLUS => ( Ast.Plus ) | MINUS => ( Ast.Minus )) 
+      cat_exp => ( (SR, cat_exp) ) )* 
+    => ( multi_binop_left2 cat_exp SR )
+  ;
+
+cat_exp
+  : timesdiv_exp (CAT timesdiv_exp)* => (multi_binop_left Ast.Cat (timesdiv_exp :: SR))
+  ;
+
+timesdiv_exp
+  : not_exp (
+      (TIMES => ( Ast.Times ) | DIV => ( Ast.Div )) 
+      not_exp => ( (SR, not_exp) ) )* 
+    => ( multi_binop_left2 not_exp SR )
+  ;
+
+
+not_exp
+  : (sel_exp | ((NOT)+ sel_exp => (multi_unop Ast.Not (length SR) sel_exp)))
+  ;
+
+sel_exp :
+    (SEL1 => (Ast.Proj1) | SEL2 => (Ast.Proj2))* app_exp =>
+      (multi_unop' SR app_exp)
+  ;
+
+
+app_exp :
+    cond_exp+ => (multi_binop_left Ast.App cond_exp)
+  ;
+
+cond_exp :
+    IF exp THEN exp ELSE exp ENDIF => (Ast.Cond(exp1, exp2, exp3))
+  | let_exp
+  ;
+
+let_exp :
+    LET ID EQ exp IN exp END => ( Ast.Let (ID, exp1, exp2) )
+  | LETREC ID EQ func IN exp END => (Ast.Letrec (ID, func, exp))
+  | fn_exp
+  ;
+
+fn_exp :
+    func => (func)
+  | pair_exp
+  ;
+
+pair_exp :
+    LP exp (COMMA exp)? RP =>
+    (case SR of NONE => exp | SOME e2 => Ast.Pair(exp, e2))
+  | len_exp
+  ;
+
+len_exp :
+    LVERT exp RVERT => ( Ast.Len exp )
+  | lit_id_exp
+  ;
+
+lit_id_exp :
+    ID => (Ast.Ident ID)
+  | NUM => (Ast.Num NUM)
+  | STRING => (Ast.Str STRING)
+  | TRUE => (Ast.Bool true)
+  | FALSE => (Ast.Bool false)
+  ;
+    
+
+
+func
+  : FN ID DARROW exp END => (Ast.Lambda(ID, exp))
+  ;

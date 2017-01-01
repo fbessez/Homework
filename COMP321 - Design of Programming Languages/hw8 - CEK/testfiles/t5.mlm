@@ -1,0 +1,3 @@
+val rec factorial = fn x => if x <= 0 then 1 else x*(factorial (x-1)) fi  end
+val y = 2*3 
+val z = y*(factorial 4) 
