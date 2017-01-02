@@ -28,5 +28,3 @@ Additional Thoughts:
 	The instructions were clear. Your support was offered plenty of times. The assignment was interesting,
 	though not as interesting as the previous assignment with the distributed hash table. I couldn't
 	implement the DHT, but I found it to be more challenging. This assignment was definitely satisfying though.
-	Thanks for an awesome semester! I hope to stop by your office sometime during next week or next semester to 
-	talk about some questions I have about Distributed Systems.
