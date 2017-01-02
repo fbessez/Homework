@@ -1,7 +1,4 @@
-(*  COMP 321:  Interpreter for a higher-order language.
-*   
-*   N. Danner
-*   Fall 2016
+(* 
 *)
 
 structure Interp =

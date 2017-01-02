@@ -1,6 +1,4 @@
-(*  COMP 321 Homework 5:  Type-checking for a fragment of C.
-*   
-*   N. Danner.
+(*  COMP 321 Homework 5:  Type-checking
 *)
 
 structure AnnAst =

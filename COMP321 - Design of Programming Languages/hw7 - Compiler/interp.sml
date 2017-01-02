@@ -1,6 +1,5 @@
 (*  COMP 321 Homework 6:  Interpreter for a fragment of C.
 *   
-*   N. Danner
 *   Fall 2016
 *
 *   There are two common approaches to handling global definitions in a program

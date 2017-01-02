@@ -1,39 +1,4 @@
 (*  COMP 321 homework 3:  CPP parser driver.
-*   
-*   Upon building this driver, there are several ways of executing it from
-*   the shell.  
-*
-*   - To lex a program that is in file f and print the resulting tokens to the
-*     screen:
-*
-*       $ ./driver lex f
-*
-*   - To parse a program that is in file f and print the resulting
-*     Ast.program value to the screen (using Ast.programToString):
-*
-*       $ ./driver parse f
-*
-*   - To type-check a program that is in file f and print the resulting
-*     annotated abstract syntax tree to the screen (using
-*     AnnAst.programToString):
-*
-*       $ ./driver check f
-*
-*   - To execute a program that is in file f:
-*
-*       $ ./driver exec f
-*
-*     Each time a readXXX function is called in the program, the program will
-*     read a line from standard input, and each time a printXXX function is
-*     called in the program, the result will be printed to standard output.
-*
-*   - Options:
-*
-*       --expr:  the contents of f are an expression, not a program.
-*       --arg:   the argument is the program itself or the expression itself,
-*                rather than the name of a file with the program/expression.
-*
-*   N. Danner
 *)
 
 structure Driver =

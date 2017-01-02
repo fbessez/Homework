@@ -1,9 +1,5 @@
-(*  COMP 321 Homework 5:  Type-checking for a fragment of C.
-*
+(*  COMP 321 Homework 5:  Type-checking
 *   Abstract syntax definitions.
-*   
-*   N. Danner
-*   Fall 2016
 *)
 
 structure Ast =

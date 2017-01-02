@@ -1,6 +1,6 @@
 # COMP 321 Homework 7:  Compiler
 #
-# N. Danner
+
 
 # Dependency lists.
 

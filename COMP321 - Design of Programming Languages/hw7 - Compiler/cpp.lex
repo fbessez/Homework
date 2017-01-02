@@ -1,9 +1,4 @@
 (*  COMP 321 Homework 3:  Lexer and parser for a fragment of C.
-*
-*   ml-ulex specification.
-*   
-*   N. Danner
-*   Fall 2016
 *)
 
 %name CPPLexer ;

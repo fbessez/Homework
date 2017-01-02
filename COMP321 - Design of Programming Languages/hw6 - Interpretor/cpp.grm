@@ -1,9 +1,6 @@
-(*  COMP 321 Homework 3:  Lexer and parser for a fragment of C.
+(*  COMP 321 Homework 3: 
 *
 *   ml-antlr specification.
-*
-*   N. Danner
-*   Fall 2016
 *)
 
 (*  The base of the generated structures and functors must be CPPGrm, so the

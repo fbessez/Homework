@@ -1,6 +1,4 @@
 # COMP 321 Homework 3:  Lexer and parser specifications.
-#
-# N. Danner
 
 # Dependency lists.
 

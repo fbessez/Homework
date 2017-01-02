@@ -1,6 +1,5 @@
 (*  Tests for COMP 321 Homework 6:  interpreter for a fragment of C
 *
-*   N. Danner
 *   Fall 2016
 *)
 

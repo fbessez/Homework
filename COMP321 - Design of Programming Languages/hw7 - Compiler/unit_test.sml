@@ -1,25 +1,4 @@
 (*
-*   Unit-testing framework for SML.
-*
-*   Most clients will use only the assert* functions in UnitTest.  Those
-*   functions typically take at least two arguments:  a name of type string
-*   and a test function of type unit -> 'a.  They return a value t of type
-*   test, which we informally call an 'a-type test.  Tests are typically run
-*   through a test runner (see the TestRunner module, below), and when a test is
-*   run, the outcome is either success, failure, or an exception.  This
-*   information is passed to the test runner, which in turn communicates the
-*   information to the client.  Typically when a test is not successful,
-*   additional information is passed to the test runner, such as a message to
-*   display to indicate how the test did not succeed; we call this the failure
-*   message.
-*
-*   Most clients will use one of the run* functions in TestRunner to run tests.
-*   Those functions take some variant of a list of tests to be run or or a test
-*   suite, which is a value of type (string * (test list)) list.  Each element
-*   of a suite consists of a name and a list of tests to be run.
-*
-*   N. Danner.
-*
 *)
 structure UnitTest =
 struct

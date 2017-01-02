@@ -1,7 +1,4 @@
-(*  Tests for COMP 321 Homework 5:  type-checking a fragment of C
-*
-*   N. Danner
-*   Fall 2016
+(*  Tests for COMP 321 Homework 5
 *)
 
 structure Tests =

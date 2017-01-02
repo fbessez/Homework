@@ -1,8 +1,8 @@
 Fabien Bessez
 Assign4 : Consensus and Election
 Comp360 : Distributed Systems
-Jeff Epstein
 
+Note: Some of the code given was the solution code to Assignment2
 
 Possible Bugs: 
 	1 - I attempted to update the lease["timestamp"] for replicas with the time.time()

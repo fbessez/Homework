@@ -1,32 +1,4 @@
 (*  COMP 321 homework 3:  CPP parser driver.
-*   
-*   Upon building this driver, there are several ways of executing it from
-*   the shell.  
-*
-*   - To parse a program that is in file f and print the resulting
-*     Ast.program value to the screen (using Ast.programToString):
-*
-*       $ ./driver f
-*
-*   - To parse an expression that is in file f and print the resulting
-*     Ast.expr value to the screen (using Ast.expToString):
-*
-*       $ ./driver --expr f
-*
-*   - To print the results of just lexing the contents of file f:
-*
-*       $ ./driver --lex f
-*
-*   - To parse an expression e that you give on the command line instead of in a
-*     file:
-*
-*       $ ./driver --expr --arg e
-*
-*     Note that if e has spaces, you should put quotes around it.
-*
-*   
-*
-*   
 *)
 
 structure Driver =

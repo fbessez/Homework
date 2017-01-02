@@ -1,6 +1,5 @@
 (*  COMP 321 Homework 5:  CPP typing engine.
 *   
-*   N. Danner
 *)
 
 structure Typing =

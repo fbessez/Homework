@@ -1,7 +1,4 @@
-(*  COMP 321 Homework 7:  Compiler for a fragment of C.
-*
-*   N. Danner
-*   Fall 2016
+(*  COMP 321 Homework 7:  Compiler
 *)
 
 structure Compile =

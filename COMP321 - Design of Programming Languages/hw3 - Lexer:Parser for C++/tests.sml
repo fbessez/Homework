@@ -1,6 +1,4 @@
-(*  Tests for COMP 321 Homework 3:  lexing and parsing a fragment of C
-*
-*   Fall 2016
+(*  Tests for COMP 321 Homework 3
 *)
 
 structure Tests =

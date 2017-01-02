@@ -1,7 +1,4 @@
-# COMP 321 Homework 3:  Lexer and parser specifications.
-#
-# N. Danner
-
+# COMP 321 Homework 3:  
 # Dependency lists.
 
 TARGETS=driver tests
